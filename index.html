@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <meta name="theme-color" content="#b5406e"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="BurocRapp"/>
+  <meta name="description" content="Trámites municipales de Cuernavaca desde tu celular"/>
+  <link rel="manifest" href="manifest.json"/>
+  <title>BurocRapp Cuernavaca</title>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    :root{
+      --pink:#b5406e;--pink-mid:#d4547a;--pink-light:#fce8f0;
+      --gold:#e8a840;--orange:#e07030;--cream:#f7f1eb;--gray:#f2f2f4;
+      --text:#1e1e1e;--muted:#8a8a8a;
+    }
+    html,body{height:100%;overflow:hidden;background:#c8beb5;font-family:'Nunito',sans-serif}
+    body{display:flex;justify-content:center}
+    ::-webkit-scrollbar{display:none}
+    #app{position:relative;width:100%;max-width:430px;height:100vh;background:#fff;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.3)}
+    .screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .22s ease;background:#fff;overflow-y:auto}
+    .screen.active{opacity:1;pointer-events:all}
+
+    /* ── SPLASH ── */
+    #s-splash{align-items:center;justify-content:center}
+    .sp-bg{position:absolute;inset:0;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Cuernavaca_Clock_Tower.jpg/800px-Cuernavaca_Clock_Tower.jpg') center/cover}
+    .sp-ov{position:absolute;inset:0;background:linear-gradient(160deg,rgba(222,162,58,.9),rgba(158,42,92,.95))}
+    .sp-in{position:relative;z-index:2;text-align:center;animation:fadeUp .5s ease both}
+    .sp-logo{font-family:'Black Han Sans',sans-serif;font-size:64px;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.28);line-height:1}
+    .sp-sub{font-size:21px;font-weight:600;color:rgba(255,255,255,.85);letter-spacing:2px;margin-top:5px}
+    .sp-track{width:190px;height:4px;background:rgba(255,255,255,.22);border-radius:99px;margin:28px auto 0;overflow:hidden}
+    .sp-fill{height:100%;width:0;background:#fff;border-radius:99px;animation:barLoad 2s ease forwards}
+    @keyframes barLoad{to{width:100%}}
+
+    /* ── HERO ── */
+    .hero{position:relative;height:62vh;min-height:400px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:48px;flex-shrink:0}
+    .h-bg{position:absolute;inset:0;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Cuernavaca_Clock_Tower.jpg/800px-Cuernavaca_Clock_Tower.jpg') center/cover}
+    .h-ov{position:absolute;inset:0;background:linear-gradient(160deg,rgba(222,162,58,.86),rgba(192,78,108,.82) 50%,rgba(152,42,92,.94))}
+    .buga{position:absolute;top:22%;width:88px;pointer-events:none}
+    .buga-l{left:4px}.buga-r{right:4px;transform:scaleX(-1)}
+    .h-body{position:relative;z-index:2;text-align:center;animation:fadeUp .6s ease both}
+    .h-logo{font-family:'Black Han Sans',sans-serif;font-size:clamp(50px,13vw,68px);color:#fff;line-height:1;text-shadow:0 4px 20px rgba(0,0,0,.22)}
+    .h-city{font-size:clamp(19px,5vw,25px);font-weight:600;color:rgba(255,255,255,.88);letter-spacing:1.5px;margin-top:4px}
+    .h-acts{margin-top:34px;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 32px}
+    .link-ghost{color:rgba(255,255,255,.9);font-size:16px;font-weight:700;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.35);padding-bottom:2px}
+    .inicio-bottom{flex:1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px}
+    .link-pink{color:var(--pink);font-size:16px;font-weight:700;cursor:pointer}
+
+    /* ── BUTTONS ── */
+    .btn{border:none;border-radius:50px;padding:14px 28px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .12s,opacity .15s}
+    .btn:active{transform:scale(.96)}.btn:disabled{opacity:.6;cursor:not-allowed}
+    .btn-white{background:rgba(255,255,255,.94);color:#333;box-shadow:0 6px 22px rgba(0,0,0,.16)}
+    .btn-pink{background:var(--pink);color:#fff;box-shadow:0 6px 22px rgba(181,64,110,.3)}
+    .btn-outline{background:#fff;border:2px solid #ddd;color:var(--text)}
+    .btn-full{width:100%}
+
+    /* ── FORM SCREENS ── */
+    .form-hdr{background:linear-gradient(135deg,var(--gold),var(--pink-mid));padding:20px 20px 28px;flex-shrink:0}
+    .form-hdr h2{font-family:'Black Han Sans',sans-serif;font-size:25px;color:#fff;margin:12px 0 4px}
+    .form-hdr p{color:rgba(255,255,255,.8);font-size:14px}
+    .form-bd{flex:1;overflow-y:auto;padding:24px 20px 48px}
+    .fld{margin-bottom:18px}
+    .fld label{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+    .fld input{width:100%;border:2px solid #eee;border-radius:13px;padding:13px 16px;font-family:'Nunito',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s}
+    .fld input:focus{border-color:var(--pink-mid)}
+    .hint{font-size:11px;color:var(--muted);margin-top:4px;display:block}
+    .badge-u{background:var(--pink-light);color:var(--pink);font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:4px;vertical-align:middle}
+    .pw-w{position:relative}
+    .pw-w input{padding-right:46px}
+    .eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px}
+    .curp-bar{height:3px;background:#eee;border-radius:99px;margin-top:5px;overflow:hidden}
+    .curp-fill{height:100%;background:var(--pink);border-radius:99px;width:0;transition:width .2s}
+    .err-box{background:#ffeaea;border:1.5px solid #ffb3b3;border-radius:11px;padding:11px 14px;font-size:13px;color:#b00;margin-bottom:16px;font-weight:700;display:none}
+    .form-sw{text-align:center;margin-top:18px;color:var(--muted);font-size:14px}
+    .form-sw a{color:var(--pink);font-weight:800;cursor:pointer}
+
+    /* ── APP HEADER ── */
+    .app-hdr{background:linear-gradient(135deg,var(--gold),var(--pink-mid) 55%,#a83060);padding:18px 18px 24px;position:relative;overflow:hidden;flex-shrink:0}
+    .app-hdr-bg{position:absolute;inset:0;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Cuernavaca_Clock_Tower.jpg/800px-Cuernavaca_Clock_Tower.jpg') center/cover;opacity:.13}
+    .app-hdr-in{position:relative;z-index:1}
+    .app-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+    .app-logo{font-family:'Black Han Sans',sans-serif;font-size:21px;color:#fff;line-height:1}
+    .app-logo span{display:block;font-family:'Nunito',sans-serif;font-size:11px;font-weight:600;color:rgba(255,255,255,.72);letter-spacing:1px}
+    .hdr-icons{display:flex;gap:8px}
+    .hdr-icons button{background:rgba(255,255,255,.18);border:none;border-radius:50%;width:36px;height:36px;font-size:17px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .greeting{color:rgba(255,255,255,.95);font-size:18px;font-weight:700}
+
+    /* ── BODY / CARDS ── */
+    .scroll-bd{flex:1;overflow-y:auto;padding:18px 14px;background:var(--gray)}
+    .sec-title{font-family:'Black Han Sans',sans-serif;font-size:23px;color:var(--pink);text-align:center;margin-bottom:16px}
+    .doc-card{background:#fff;border-radius:15px;overflow:hidden;margin-bottom:12px;box-shadow:0 3px 14px rgba(0,0,0,.09);cursor:pointer;transition:transform .12s}
+    .doc-card:active{transform:scale(.98)}
+    .doc-top{background:linear-gradient(135deg,var(--gold),var(--pink-mid));padding:10px 14px;display:flex;align-items:center;gap:8px}
+    .doc-top-ico{font-size:20px}.doc-top-nm{font-family:'Black Han Sans',sans-serif;font-size:15px;color:#fff}
+    .doc-info{padding:10px 14px}
+    .doc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px}
+    .doc-lbl{color:var(--muted);font-weight:600}
+    .chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:800;text-transform:uppercase}
+    .chip-pend{background:#fff3cd;color:#856404}
+    .chip-proc{background:#cfe2ff;color:#084298}
+    .chip-done{background:#d1e7dd;color:#0a3622}
+    .empty-st{display:flex;flex-direction:column;align-items:center;padding:30px 20px;background:#fff;border-radius:15px;margin-bottom:12px}
+    .empty-ico{font-size:44px;margin-bottom:10px}
+    .empty-st p{text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+
+    /* ── FAB + NAV ── */
+    .fab-row{display:flex;gap:10px;padding:8px 12px;background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0}
+    .fab-row .btn{flex:1;padding:13px;font-size:14px}
+    .bot-nav{display:flex;background:#fff;border-top:1px solid #ebebeb;box-shadow:0 -4px 16px rgba(0,0,0,.07);flex-shrink:0}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 12px;border:none;background:none;cursor:pointer;font-family:'Nunito',sans-serif}
+    .nav-btn span{font-size:21px;margin-bottom:2px}
+    .nav-btn small{font-size:10px;font-weight:700;color:var(--muted)}
+    .nav-btn.act span{background:var(--orange);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;margin-top:-3px}
+    .nav-btn.act small{color:var(--orange)}
+
+    /* ── SEARCH ── */
+    #s-buscar{background:var(--cream);overflow-y:auto}
+    .srch-hdr{background:linear-gradient(135deg,var(--gold),var(--pink-mid));padding:18px 18px 24px;flex-shrink:0}
+    .srch-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .srch-title{font-family:'Black Han Sans',sans-serif;font-size:20px;color:#fff}
+    .srch-wrap{position:relative}
+    .srch-wrap input{width:100%;border:none;border-radius:50px;padding:12px 44px 12px 16px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);outline:none;box-shadow:0 4px 16px rgba(0,0,0,.13)}
+    .srch-ico{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--muted);pointer-events:none}
+    #results{background:#fff;margin:0 16px;border-radius:0 0 16px 16px;box-shadow:0 6px 20px rgba(0,0,0,.1);overflow:hidden;max-height:300px;overflow-y:auto;display:none}
+    .res-item{display:flex;align-items:center;gap:11px;padding:12px 15px;border-bottom:1px solid #f2f2f2;cursor:pointer;transition:background .12s}
+    .res-item:last-child{border-bottom:none}.res-item:active{background:#fdf4f8}
+    .res-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .res-name{font-size:14px;font-weight:800;color:var(--text)}
+    .res-name mark{background:none;color:var(--pink);font-weight:900}
+    .res-cat{font-size:11px;color:var(--muted);margin-top:1px}
+    .no-res{display:none;flex-direction:column;align-items:center;padding:32px 16px}
+    .cats-sec{padding:20px 16px}
+    .cats-title{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:11px}
+    .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .cat-card{background:#fff;border-radius:13px;padding:13px;display:flex;align-items:center;gap:9px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.07);transition:transform .12s;border:2px solid transparent}
+    .cat-card:active{transform:scale(.97);border-color:var(--pink-light)}
+    .ci{font-size:21px;background:var(--gray);padding:7px;border-radius:9px}.cn{font-size:12px;font-weight:800;color:var(--text);line-height:1.2}
+
+    /* ── INNER HEADER ── */
+    .inner-hdr{background:linear-gradient(135deg,var(--gold),var(--pink-mid));padding:18px 18px 24px;flex-shrink:0}
+    .inner-hdr h2{font-family:'Black Han Sans',sans-serif;font-size:22px;color:#fff;margin-top:11px}
+    .h-item{background:#fff;border-radius:13px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:11px;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer}
+    .h-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+    .h-name{font-size:14px;font-weight:800;color:var(--text)}
+    .h-date{font-size:11px;color:var(--muted);margin-top:2px}
+
+    /* ── PERFIL ── */
+    .profile-card{background:linear-gradient(135deg,var(--gold),var(--pink-mid));border-radius:17px;padding:26px;text-align:center;margin-bottom:16px}
+    .pav{font-size:52px;margin-bottom:7px}
+    .pname{font-family:'Black Han Sans',sans-serif;font-size:21px;color:#fff}
+    .pcurp{font-size:11px;color:rgba(255,255,255,.76);margin-top:3px;letter-spacing:1.5px}
+    .menu-list{background:#fff;border-radius:13px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .menu-item{padding:15px 16px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;border-bottom:1px solid #f5f5f5;transition:background .12s}
+    .menu-item:last-child{border-bottom:none}.menu-item:active{background:#fdf4f8}
+    .menu-item.danger{color:#d03030}
+
+    /* ── INFO ── */
+    .info-card{background:#fff;border-radius:13px;padding:17px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+    .info-card h3{font-family:'Black Han Sans',sans-serif;font-size:17px;color:var(--pink);margin-bottom:6px}
+    .info-card p{font-size:14px;color:#555;line-height:1.7}
+
+    /* ── BACK BTN ── */
+    .btn-back{background:rgba(255,255,255,.22);border:none;border-radius:50px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;padding:7px 14px;cursor:pointer}
+
+    /* ── PANEL ── */
+    .panel{position:absolute;inset:0;z-index:300;display:flex;flex-direction:column;background:#fff;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+    .panel.open{transform:translateY(0)}
+    .panel-hdr{background:linear-gradient(135deg,var(--gold),var(--pink-mid));padding:18px 18px 20px;display:flex;align-items:flex-start;gap:11px;flex-shrink:0}
+    .close-btn{background:rgba(255,255,255,.24);border:none;border-radius:50%;width:34px;height:34px;font-size:17px;color:#fff;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .panel-hdr h2{font-family:'Black Han Sans',sans-serif;font-size:18px;color:#fff;line-height:1.2}
+    .panel-icon{font-size:50px;text-align:center;padding:18px 0 6px}
+    .panel-desc{text-align:center;color:var(--muted);font-size:13px;padding:0 20px 16px;line-height:1.6}
+    .panel-body{padding:0 16px 100px}
+    .ps{margin-bottom:20px}
+    .ps h3{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px}
+    .p-chips{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+    .p-chip{background:var(--pink-light);border-radius:11px;padding:12px;text-align:center}
+    .pc-lbl{font-size:10px;color:var(--pink);font-weight:700;text-transform:uppercase}
+    .pc-val{font-size:13px;font-weight:900;color:var(--text);margin-top:2px}
+    .req-item{background:var(--gray);border-radius:10px;padding:10px 13px;display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:13px;font-weight:700;color:var(--text)}
+    .where-box{background:var(--gray);border-radius:11px;padding:13px 15px;font-size:13px;color:var(--text);line-height:1.7}
+    .panel-cta{position:sticky;bottom:14px;margin:0 16px;background:var(--pink);border:none;border-radius:50px;padding:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:900;color:#fff;cursor:pointer;box-shadow:0 6px 22px rgba(181,64,110,.4);width:calc(100% - 32px);transition:transform .12s}
+    .panel-cta:active{transform:scale(.97)}.panel-cta:disabled{opacity:.6}
+
+    /* ── TOAST ── */
+    .toast{position:absolute;bottom:84px;left:50%;transform:translateX(-50%) translateY(10px);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;z-index:999}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* ── LOADING OVERLAY ── */
+    #fb-loading{position:absolute;inset:0;background:rgba(255,255,255,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:500;gap:14px}
+    #fb-loading p{font-size:15px;font-weight:700;color:var(--muted)}
+    .spinner{width:40px;height:40px;border:4px solid var(--pink-light);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- LOADING OVERLAY while Firebase initializes -->
+  <div id="fb-loading">
+    <div class="spinner"></div>
+    <p>Conectando...</p>
+  </div>
+
+  <!-- ░░ SPLASH ░░ -->
+  <div id="s-splash" class="screen">
+    <div class="sp-bg"></div><div class="sp-ov"></div>
+    <div class="sp-in">
+      <div class="sp-logo">BUROCRAPP</div>
+      <div class="sp-sub">Cuernavaca</div>
+      <div class="sp-track"><div class="sp-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ░░ INICIO ░░ -->
+  <div id="s-inicio" class="screen">
+    <div class="hero">
+      <div class="h-bg"></div><div class="h-ov"></div>
+      <svg class="buga buga-l" viewBox="0 0 90 130" fill="none"><g stroke="white" stroke-width="1.4" opacity=".9"><ellipse cx="28" cy="48" rx="19" ry="11" transform="rotate(-35 28 48)"/><ellipse cx="54" cy="38" rx="19" ry="11" transform="rotate(18 54 38)"/><ellipse cx="60" cy="68" rx="19" ry="11" transform="rotate(-8 60 68)"/><ellipse cx="34" cy="76" rx="17" ry="10" transform="rotate(32 34 76)"/><circle cx="40" cy="58" r="5"/><line x1="40" y1="63" x2="40" y2="130"/></g></svg>
+      <svg class="buga buga-r" viewBox="0 0 90 130" fill="none" style="transform:scaleX(-1)"><g stroke="white" stroke-width="1.4" opacity=".9"><ellipse cx="28" cy="48" rx="19" ry="11" transform="rotate(-35 28 48)"/><ellipse cx="54" cy="38" rx="19" ry="11" transform="rotate(18 54 38)"/><ellipse cx="60" cy="68" rx="19" ry="11" transform="rotate(-8 60 68)"/><ellipse cx="34" cy="76" rx="17" ry="10" transform="rotate(32 34 76)"/><circle cx="40" cy="58" r="5"/><line x1="40" y1="63" x2="40" y2="130"/></g></svg>
+      <div class="h-body">
+        <div class="h-logo">BUROCRAPP</div>
+        <div class="h-city">Cuernavaca</div>
+        <div class="h-acts">
+          <button class="btn btn-white btn-full" onclick="show('s-login')">Acceder con <b>CURP</b></button>
+          <a class="link-ghost" onclick="show('s-register')">Crear cuenta</a>
+        </div>
+      </div>
+    </div>
+    <div class="inicio-bottom">
+      <button class="btn btn-pink btn-full" onclick="show('s-buscar')">Otros servicios</button>
+      <a class="link-pink" onclick="show('s-info')">Más información</a>
+    </div>
+  </div>
+
+  <!-- ░░ LOGIN ░░ -->
+  <div id="s-login" class="screen">
+    <div class="form-hdr">
+      <button class="btn-back" onclick="show('s-inicio')">← Inicio</button>
+      <h2>Acceder con CURP</h2>
+      <p>Ingresa tu CURP y contraseña</p>
+    </div>
+    <div class="form-bd">
+      <div class="err-box" id="l-err"></div>
+      <div class="fld">
+        <label>CURP</label>
+        <input id="l-curp" type="text" maxlength="18" placeholder="XXXX000000XXXXXXXX"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')"/>
+        <span class="hint">18 caracteres — es tu usuario</span>
+      </div>
+      <div class="fld">
+        <label>Contraseña</label>
+        <div class="pw-w">
+          <input id="l-pass" type="password" placeholder="••••••••"/>
+          <button class="eye" onclick="toggleEye('l-pass',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-pink btn-full" id="l-btn" onclick="doLogin()">
+        <span class="bl">Ingresar</span><span class="bs" style="display:none">⏳ Verificando...</span>
+      </button>
+      <p class="form-sw">¿No tienes cuenta? <a onclick="show('s-register')">Regístrate aquí</a></p>
+    </div>
+  </div>
+
+  <!-- ░░ REGISTER ░░ -->
+  <div id="s-register" class="screen">
+    <div class="form-hdr">
+      <button class="btn-back" onclick="show('s-inicio')">← Inicio</button>
+      <h2>Crear cuenta</h2>
+      <p>Tu CURP será tu nombre de usuario</p>
+    </div>
+    <div class="form-bd">
+      <div class="err-box" id="r-err"></div>
+      <div class="fld">
+        <label>Nombre completo</label>
+        <input id="r-name" type="text" placeholder="Juan Pérez López"/>
+      </div>
+      <div class="fld">
+        <label>CURP <span class="badge-u">tu usuario</span></label>
+        <input id="r-curp" type="text" maxlength="18" placeholder="XXXX000000XXXXXXXX"
+               oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');updBar(this)"/>
+        <div class="curp-bar"><div class="curp-fill" id="cbar"></div></div>
+        <span class="hint" id="curp-hint">0 / 18 caracteres</span>
+      </div>
+      <div class="fld">
+        <label>Correo electrónico</label>
+        <input id="r-email" type="email" placeholder="correo@ejemplo.com"/>
+      </div>
+      <div class="fld">
+        <label>Contraseña</label>
+        <div class="pw-w">
+          <input id="r-pass" type="password" placeholder="Mínimo 8 caracteres"/>
+          <button class="eye" onclick="toggleEye('r-pass',this)">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-pink btn-full" id="r-btn" onclick="doRegister()">
+        <span class="bl">Crear cuenta</span><span class="bs" style="display:none">⏳ Guardando...</span>
+      </button>
+      <p class="form-sw">¿Ya tienes cuenta? <a onclick="show('s-login')">Inicia sesión</a></p>
+    </div>
+  </div>
+
+  <!-- ░░ HOME ░░ -->
+  <div id="s-home" class="screen">
+    <div class="app-hdr">
+      <div class="app-hdr-bg"></div>
+      <div class="app-hdr-in">
+        <div class="app-row">
+          <div class="app-logo">BUROCRAPP<span>Cuernavaca</span></div>
+          <div class="hdr-icons">
+            <button onclick="show('s-buscar')">🔍</button>
+            <button onclick="doLogout()" title="Cerrar sesión">🚪</button>
+          </div>
+        </div>
+        <div class="greeting" id="greeting">¡Hola!</div>
+      </div>
+    </div>
+    <div class="scroll-bd">
+      <h2 class="sec-title">Mis documentos</h2>
+      <div id="docs-list">
+        <div class="empty-st"><div class="empty-ico">📂</div><p>Sin documentos aún.<br>Inicia un trámite para comenzar.</p></div>
+      </div>
+    </div>
+    <div class="fab-row">
+      <button class="btn btn-pink" onclick="show('s-buscar')">＋ Nuevo trámite</button>
+      <button class="btn btn-outline" onclick="show('s-historial')">📋 Seguimiento</button>
+    </div>
+    <nav class="bot-nav">
+      <button class="nav-btn act" onclick="show('s-home')"><span>📁</span><small>Servicios</small></button>
+      <button class="nav-btn" onclick="show('s-buscar')"><span>🔍</span><small>Buscar</small></button>
+      <button class="nav-btn" onclick="show('s-historial')"><span>📊</span><small>Historial</small></button>
+      <button class="nav-btn" onclick="show('s-perfil')"><span>👤</span><small>Perfil</small></button>
+    </nav>
+  </div>
+
+  <!-- ░░ BUSCAR ░░ -->
+  <div id="s-buscar" class="screen">
+    <div class="srch-hdr">
+      <div class="srch-top">
+        <button class="btn-back" onclick="back()">← Atrás</button>
+        <span class="srch-title">Buscar trámite</span>
+      </div>
+      <div class="srch-wrap">
+        <input id="q" type="text" placeholder="ine, licencia, acta..." autocomplete="off"
+               oninput="doSearch(this.value)" onfocus="doSearch(this.value)"/>
+        <span class="srch-ico">🔍</span>
+      </div>
+    </div>
+    <div id="results"></div>
+    <div id="no-res" class="no-res empty-st" style="display:none">
+      <div class="empty-ico">🔎</div><p>Sin resultados para "<span id="nq"></span>"</p>
+    </div>
+    <div id="cats-sec" class="cats-sec">
+      <div class="cats-title">Categorías populares</div>
+      <div class="cats-grid" id="cats-grid"></div>
+    </div>
+  </div>
+
+  <!-- ░░ HISTORIAL ░░ -->
+  <div id="s-historial" class="screen">
+    <div class="inner-hdr">
+      <button class="btn-back" onclick="back()">← Atrás</button>
+      <h2>Mi historial</h2>
+    </div>
+    <div class="scroll-bd" id="hist-body">
+      <div class="empty-st"><div class="empty-ico">📋</div><p>Sin trámites aún.</p></div>
+    </div>
+    <nav class="bot-nav">
+      <button class="nav-btn" onclick="show('s-home')"><span>📁</span><small>Servicios</small></button>
+      <button class="nav-btn" onclick="show('s-buscar')"><span>🔍</span><small>Buscar</small></button>
+      <button class="nav-btn act"><span>📊</span><small>Historial</small></button>
+      <button class="nav-btn" onclick="show('s-perfil')"><span>👤</span><small>Perfil</small></button>
+    </nav>
+  </div>
+
+  <!-- ░░ PERFIL ░░ -->
+  <div id="s-perfil" class="screen">
+    <div class="inner-hdr">
+      <button class="btn-back" onclick="back()">← Atrás</button>
+      <h2>Mi perfil</h2>
+    </div>
+    <div class="scroll-bd">
+      <div class="profile-card">
+        <div class="pav">👤</div>
+        <div class="pname" id="p-name">—</div>
+        <div class="pcurp" id="p-curp">—</div>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item" onclick="show('s-historial')">📋 Historial de trámites <span>›</span></div>
+        <div class="menu-item" onclick="show('s-buscar')">🔍 Buscar trámites <span>›</span></div>
+        <div class="menu-item danger" onclick="doLogout()">🚪 Cerrar sesión</div>
+      </div>
+    </div>
+    <nav class="bot-nav">
+      <button class="nav-btn" onclick="show('s-home')"><span>📁</span><small>Servicios</small></button>
+      <button class="nav-btn" onclick="show('s-buscar')"><span>🔍</span><small>Buscar</small></button>
+      <button class="nav-btn" onclick="show('s-historial')"><span>📊</span><small>Historial</small></button>
+      <button class="nav-btn act"><span>👤</span><small>Perfil</small></button>
+    </nav>
+  </div>
+
+  <!-- ░░ INFO ░░ -->
+  <div id="s-info" class="screen">
+    <div class="inner-hdr">
+      <button class="btn-back" onclick="show('s-inicio')">← Inicio</button>
+      <h2>Información</h2>
+    </div>
+    <div class="scroll-bd">
+      <div class="info-card"><h3>¿Qué es BurocRapp?</h3><p>App oficial del Municipio de Cuernavaca para trámites gubernamentales desde tu celular, sin filas.</p></div>
+      <div class="info-card"><h3>¿Cómo funciona?</h3><p>Regístrate con tu CURP, busca el trámite que necesitas, conoce requisitos, costos y dónde realizarlo.</p></div>
+      <div class="info-card"><h3>Contacto</h3><p>Presidencia Municipal de Cuernavaca<br>Calle Morelos s/n, Centro<br>Tel: (777) 318-6400</p></div>
+      <div class="info-card"><h3>Versión</h3><p>BurocRapp v1.0 — PWA con Firebase</p></div>
+    </div>
+  </div>
+
+  <!-- ░░ PANEL DETALLE ░░ -->
+  <div id="panel" class="panel">
+    <div class="panel-hdr">
+      <button class="close-btn" onclick="closePanel()">✕</button>
+      <h2 id="pt"></h2>
+    </div>
+    <div class="panel-icon" id="pi"></div>
+    <div class="panel-desc" id="pd"></div>
+    <div class="panel-body" id="pb"></div>
+    <button class="panel-cta" id="cta" onclick="saveTramite()">
+      <span class="bl">Iniciar trámite</span><span class="bs" style="display:none">⏳ Guardando...</span>
+    </button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FIREBASE — Auth + Firestore + Analytics
+══════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAnalytics }        from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc, setDoc, getDoc,
+    collection, addDoc, getDocs,
+    query, where, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ── Tu configuración de Firebase ──
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCU_pMchrzGzD66CBOmwAst_JYXxUe65os",
+    authDomain:        "tully-proyect-burocrapp.firebaseapp.com",
+    projectId:         "tully-proyect-burocrapp",
+    storageBucket:     "tully-proyect-burocrapp.firebasestorage.app",
+    messagingSenderId: "741585558578",
+    appId:             "1:741585558578:web:dab149aa6af31bf17b702b",
+    measurementId:     "G-0JPDGV1287"
+  };
+
+  const fbApp  = initializeApp(firebaseConfig);
+  const fbAuth = getAuth(fbApp);
+  const fbDb   = getFirestore(fbApp);
+  getAnalytics(fbApp);
+
+  // Exponer al scope global para que el script principal los use
+  window.$auth = fbAuth;
+  window.$db   = fbDb;
+  window.$fb   = {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    doc, setDoc, getDoc,
+    collection, addDoc, getDocs,
+    query, where, orderBy
+  };
+
+  // Escuchar cambios de sesión y arrancar la app
+  onAuthStateChanged(fbAuth, async (user) => {
+    document.getElementById('fb-loading').style.display = 'none';
+    if (user) {
+      window._currentUser = user;
+      await window._refreshUI(user);
+      show('s-home');
+    } else {
+      window._currentUser = null;
+      show('s-splash');
+      setTimeout(() => show('s-inicio'), 2000);
+    }
+  });
+</script>
+
+<!-- ══════════════════════════════════════════
+     TRAMITES DATA
+══════════════════════════════════════════ -->
+<script>
+const TRAMITES = [
+  {id:'ine',        name:'INE / Credencial para Votar', cat:'Identidad',      icon:'🪪', color:'#e8e0c8', desc:'Obtén o renueva tu credencial para votar del INE.',          costo:'Gratuito',       tiempo:'30–45 días',      reqs:['Acta de nacimiento original','CURP vigente','Comprobante de domicilio','Fotografía reciente'],                           donde:'Módulo del INE más cercano o en tramites.ine.mx'},
+  {id:'licencia',   name:'Licencia de conducir',        cat:'Transporte',     icon:'🚗', color:'#f0e8d8', desc:'Tramita o renueva tu licencia de conducir automovilista.',  costo:'$450 MXN',       tiempo:'1–3 días hábiles',reqs:['INE vigente','Examen médico oficial','Comprobante de domicilio','Pago de derechos'],                                       donde:'Oficinas de Movilidad, Av. Morelos Norte 802, Cuernavaca.'},
+  {id:'acta',       name:'Acta de nacimiento',          cat:'Registro Civil', icon:'📜', color:'#e8f0e8', desc:'Solicita copias certificadas de tu acta de nacimiento.',    costo:'$85 MXN',        tiempo:'1 día hábil',     reqs:['Identificación oficial','CURP vigente','Pago de derechos'],                                                               donde:'Registro Civil Municipal o registrocivil.gob.mx'},
+  {id:'predial',    name:'Pago de predial',             cat:'Hacienda',       icon:'🏠', color:'#f0e8f0', desc:'Realiza el pago del impuesto predial de tu propiedad.',    costo:'Variable',       tiempo:'Inmediato',       reqs:['Número de cuenta catastral','Identificación oficial'],                                                                    donde:'Tesorería Municipal o bancos autorizados.'},
+  {id:'pasaporte',  name:'Pasaporte mexicano',          cat:'Identidad',      icon:'📘', color:'#e8e8f8', desc:'Tramita o renueva tu pasaporte en la SRE.',               costo:'$1,515 MXN',     tiempo:'3–5 días hábiles',reqs:['Acta de nacimiento','CURP','Comprobante de domicilio','Foto pasaporte','Pago'],                                          donde:'SRE delegación Morelos, Cuernavaca.'},
+  {id:'curp',       name:'CURP',                        cat:'Identidad',      icon:'🆔', color:'#f0f8e8', desc:'Consulta, descarga o actualiza tu CURP.',                  costo:'Gratuito',       tiempo:'Inmediato',       reqs:['Acta de nacimiento','Identificación con foto'],                                                                          donde:'gob.mx/curp o módulos de atención ciudadana.'},
+  {id:'rfc',        name:'RFC / Registro SAT',          cat:'Fiscal',         icon:'💼', color:'#fff0e0', desc:'Obtén o actualiza tu RFC ante el SAT.',                   costo:'Gratuito',       tiempo:'Inmediato',       reqs:['CURP vigente','Correo electrónico','Identificación oficial'],                                                            donde:'sat.gob.mx o módulos del SAT en Cuernavaca.'},
+  {id:'agua',       name:'Pago de agua / CAPAMA',       cat:'Servicios',      icon:'💧', color:'#e0f0f8', desc:'Paga tu recibo de agua o solicita reconexión.',           costo:'Según consumo',  tiempo:'1–2 días',        reqs:['Número de cuenta de servicio','Identificación oficial'],                                                                  donde:'Oficinas CAPAMA o capama.gob.mx'},
+  {id:'matrimonio', name:'Acta de matrimonio',          cat:'Registro Civil', icon:'💍', color:'#fce8f0', desc:'Solicita copia certificada de tu acta de matrimonio.',   costo:'$120 MXN',       tiempo:'1 día hábil',     reqs:['ID de ambos cónyuges','Fecha y lugar del matrimonio'],                                                                    donde:'Registro Civil Municipal, Palacio de Gobierno.'},
+  {id:'permiso',    name:'Permiso de construcción',     cat:'Obras',          icon:'🏗️', color:'#f8f0e0', desc:'Tramita permisos para construir, ampliar o remodelar.',  costo:'Según proyecto', tiempo:'10–30 días',      reqs:['Planos arquitectónicos','Escrituras del predio','Dictamen de uso de suelo','INE del propietario'],                         donde:'Dirección de Obras Públicas, Cuernavaca.'},
+  {id:'discapacidad',name:'Tarjeta de discapacidad',    cat:'Social',         icon:'♿', color:'#f0f0e8', desc:'Solicita o renueva la tarjeta nacional de discapacidad.', costo:'Gratuito',       tiempo:'15–20 días',      reqs:['Dictamen médico','INE o ID','CURP','Comprobante de domicilio'],                                                           donde:'DIF Municipal de Cuernavaca.'},
+  {id:'defuncion',  name:'Acta de defunción',           cat:'Registro Civil', icon:'📋', color:'#e8e8e8', desc:'Solicita copia certificada de acta de defunción.',        costo:'$85 MXN',        tiempo:'1 día hábil',     reqs:['Identificación oficial','Nombre y fecha del fallecido'],                                                                  donde:'Registro Civil Municipal de Cuernavaca.'},
+];
+const CATS = [
+  {l:'Identidad',c:'#e8e0c8',i:'🪪'},{l:'Transporte',c:'#f0e8d8',i:'🚗'},
+  {l:'Registro Civil',c:'#e8f0e8',i:'📜'},{l:'Hacienda',c:'#f0e8f0',i:'🏠'},
+  {l:'Fiscal',c:'#fff0e0',i:'💼'},{l:'Servicios',c:'#e0f0f8',i:'💧'},
+  {l:'Social',c:'#f0f0e8',i:'♿'},{l:'Obras',c:'#f8f0e0',i:'🏗️'},
+];
+</script>
+
+<!-- ══════════════════════════════════════════
+     APP LOGIC
+══════════════════════════════════════════ -->
+<script>
+let navStack = [];
+let activeT  = null;
+
+/* ── ROUTER ── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  if (navStack[navStack.length - 1] !== id) navStack.push(id);
+  if (id !== 's-buscar') { const q = document.getElementById('q'); if (q) { q.value = ''; doSearch(''); } }
+}
+function back() {
+  navStack.pop();
+  const prev = navStack[navStack.length - 1] || 's-inicio';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(prev);
+  if (el) el.classList.add('active');
+}
+
+/* ── REGISTER — guarda CURP + nombre + email en Firestore ── */
+async function doRegister() {
+  const name  = document.getElementById('r-name').value.trim();
+  const curp  = document.getElementById('r-curp').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pass  = document.getElementById('r-pass').value;
+  const err   = document.getElementById('r-err');
+  const btn   = document.getElementById('r-btn');
+  err.style.display = 'none';
+
+  if (!name)              return setErr(err, 'Ingresa tu nombre completo.');
+  if (curp.length !== 18) return setErr(err, 'La CURP debe tener exactamente 18 caracteres.');
+  if (!email.includes('@')) return setErr(err, 'Ingresa un correo electrónico válido.');
+  if (pass.length < 8)    return setErr(err, 'La contraseña debe tener al menos 8 caracteres.');
+
+  setLoad(btn, true);
+  try {
+    // Verificar si la CURP ya está registrada
+    const q = window.$fb.query(
+      window.$fb.collection(window.$db, 'usuarios'),
+      window.$fb.where('curp', '==', curp)
+    );
+    const snap = await window.$fb.getDocs(q);
+    if (!snap.empty) return setErr(err, 'Esta CURP ya está registrada. Inicia sesión.');
+
+    // Crear usuario en Firebase Auth con email + contraseña
+    const { user } = await window.$fb.createUserWithEmailAndPassword(window.$auth, email, pass);
+
+    // Guardar perfil en Firestore: nombre, CURP, email, fecha de registro
+    await window.$fb.setDoc(window.$fb.doc(window.$db, 'usuarios', user.uid), {
+      nombre:    name,
+      curp:      curp,
+      email:     email,
+      creadoEn:  new Date().toISOString()
+    });
+
+    // onAuthStateChanged se encarga del resto
+    toast(`¡Cuenta creada, ${name.split(' ')[0]}! 🎉`);
+  } catch (e) {
+    setErr(err, fbMsg(e.code));
+  } finally {
+    setLoad(btn, false);
+  }
+}
+
+/* ── LOGIN — busca email por CURP, luego autentica ── */
+async function doLogin() {
+  const curp = document.getElementById('l-curp').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  const err  = document.getElementById('l-err');
+  const btn  = document.getElementById('l-btn');
+  err.style.display = 'none';
+
+  if (curp.length !== 18) return setErr(err, 'La CURP debe tener 18 caracteres.');
+  if (!pass)              return setErr(err, 'Ingresa tu contraseña.');
+
+  setLoad(btn, true);
+  try {
+    // Buscar el email asociado a esta CURP en Firestore
+    const q    = window.$fb.query(window.$fb.collection(window.$db, 'usuarios'), window.$fb.where('curp', '==', curp));
+    const snap = await window.$fb.getDocs(q);
+    if (snap.empty) return setErr(err, 'CURP no encontrada. ¿Ya tienes cuenta?');
+
+    const { email } = snap.docs[0].data();
+
+    // Autenticar con Firebase Auth
+    await window.$fb.signInWithEmailAndPassword(window.$auth, email, pass);
+    // onAuthStateChanged redirige a home automáticamente
+    toast('¡Sesión iniciada! 👋');
+  } catch (e) {
+    setErr(err, fbMsg(e.code));
+  } finally {
+    setLoad(btn, false);
+  }
+}
+
+/* ── LOGOUT ── */
+async function doLogout() {
+  await window.$fb.signOut(window.$auth);
+  navStack = [];
+  document.getElementById('docs-list').innerHTML = emptyHtml('📂', 'Sin documentos aún.<br>Inicia un trámite para comenzar.');
+  document.getElementById('hist-body').innerHTML  = emptyHtml('📋', 'Sin trámites aún.');
+  toast('Sesión cerrada 👋');
+  show('s-inicio');
+}
+
+/* ── REFRESH UI after login/register ── */
+window._refreshUI = async function(user) {
+  try {
+    const snap = await window.$fb.getDoc(window.$fb.doc(window.$db, 'usuarios', user.uid));
+    if (snap.exists()) {
+      const d  = snap.data();
+      const fn = (d.nombre || 'Usuario').split(' ')[0];
+      document.getElementById('greeting').textContent = `¡Hola, ${fn}!`;
+      document.getElementById('p-name').textContent   = d.nombre || '—';
+      document.getElementById('p-curp').textContent   = d.curp   || '—';
+    }
+    await loadHistorial(user.uid);
+  } catch (e) { console.warn('refreshUI:', e); }
+};
+
+/* ── LOAD HISTORIAL from Firestore ── */
+async function loadHistorial(uid) {
+  try {
+    const q    = window.$fb.query(
+      window.$fb.collection(window.$db, 'tramites'),
+      window.$fb.where('uid', '==', uid),
+      window.$fb.orderBy('fecha', 'desc')
+    );
+    const snap  = await window.$fb.getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderDocs(items);
+    renderHist(items);
+  } catch (e) { console.warn('historial:', e); }
+}
+
+function renderDocs(items) {
+  const el = document.getElementById('docs-list');
+  if (!items.length) { el.innerHTML = emptyHtml('📂', 'Sin documentos aún.<br>Inicia un trámite para comenzar.'); return; }
+  el.innerHTML = items.slice(0, 6).map(t => {
+    const tr  = TRAMITES.find(x => x.id === t.tramiteId);
+    const cls = { pendiente:'chip-pend', proceso:'chip-proc', completado:'chip-done' }[t.estado] || 'chip-pend';
+    return `<div class="doc-card" onclick="openPanel('${t.tramiteId}')">
+      <div class="doc-top"><div class="doc-top-ico">${tr?.icon||'📄'}</div><div class="doc-top-nm">${t.nombre}</div></div>
+      <div class="doc-info">
+        <div class="doc-row"><span class="doc-lbl">Fecha</span><span style="font-size:12px;font-weight:800">${fmtDate(t.fecha)}</span></div>
+        <div class="doc-row"><span class="doc-lbl">Estado</span><span class="chip ${cls}">${t.estado||'pendiente'}</span></div>
+      </div></div>`;
+  }).join('');
+}
+
+function renderHist(items) {
+  const el = document.getElementById('hist-body');
+  if (!items.length) { el.innerHTML = emptyHtml('📋', 'Sin trámites aún.'); return; }
+  el.innerHTML = items.map(t => {
+    const tr  = TRAMITES.find(x => x.id === t.tramiteId);
+    const cls = { pendiente:'chip-pend', proceso:'chip-proc', completado:'chip-done' }[t.estado] || 'chip-pend';
+    return `<div class="h-item" onclick="openPanel('${t.tramiteId}')">
+      <div class="h-ico" style="background:${tr?.color||'#eee'}">${tr?.icon||'📄'}</div>
+      <div style="flex:1"><div class="h-name">${t.nombre}</div><div class="h-date">${fmtDate(t.fecha)}</div></div>
+      <span class="chip ${cls}">${t.estado||'pendiente'}</span></div>`;
+  }).join('');
+}
+
+/* ── SAVE TRAMITE to Firestore ── */
+async function saveTramite() {
+  if (!window._currentUser) { closePanel(); toast('Inicia sesión para guardar'); show('s-login'); return; }
+  if (!activeT) return;
+  const btn = document.getElementById('cta');
+  setLoad(btn, true);
+  try {
+    await window.$fb.addDoc(window.$fb.collection(window.$db, 'tramites'), {
+      uid:       window._currentUser.uid,
+      tramiteId: activeT.id,
+      nombre:    activeT.name,
+      estado:    'pendiente',
+      fecha:     new Date().toISOString()
+    });
+    await loadHistorial(window._currentUser.uid);
+    closePanel();
+    toast('Trámite guardado en Firebase ✅');
+    show('s-home');
+  } catch (e) {
+    toast('Error al guardar. Intenta de nuevo.');
+    console.error(e);
+  } finally {
+    setLoad(btn, false);
+  }
+}
+
+/* ── FUZZY SEARCH ── */
+function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+function fuzzy(q, t) {
+  q = norm(q); t = norm(t);
+  if (t.includes(q)) return 1;
+  let qi = 0, sc = 0;
+  for (let i = 0; i < t.length && qi < q.length; i++) { if (t[i] === q[qi]) { sc++; qi++; } }
+  return qi < q.length ? 0 : sc / t.length;
+}
+function hl(text, q) {
+  if (!q) return text;
+  const i = norm(text).indexOf(norm(q));
+  return i >= 0 ? text.slice(0,i)+'<mark>'+text.slice(i,i+q.length)+'</mark>'+text.slice(i+q.length) : text;
+}
+function doSearch(q) {
+  const rEl = document.getElementById('results');
+  const cEl = document.getElementById('cats-sec');
+  const nEl = document.getElementById('no-res');
+  if (!q.trim()) { rEl.style.display='none'; cEl.style.display='block'; nEl.style.display='none'; return; }
+  cEl.style.display = 'none';
+  const res = TRAMITES
+    .map(t => ({ ...t, score: Math.max(fuzzy(q,t.name), fuzzy(q,t.cat), fuzzy(q,t.desc)*.6) }))
+    .filter(t => t.score > 0).sort((a,b) => b.score-a.score).slice(0, 7);
+  if (!res.length) { rEl.style.display='none'; nEl.style.display='flex'; document.getElementById('nq').textContent=q; return; }
+  nEl.style.display = 'none';
+  rEl.innerHTML = res.map(t => `
+    <div class="res-item" onclick="openPanel('${t.id}')">
+      <div class="res-ico" style="background:${t.color}">${t.icon}</div>
+      <div style="flex:1"><div class="res-name">${hl(t.name,q)}</div><div class="res-cat">${t.cat}</div></div>
+      <div style="color:#aaa;font-size:18px">›</div>
+    </div>`).join('');
+  rEl.style.display = 'block';
+}
+
+/* ── CATEGORIES ── */
+document.getElementById('cats-grid').innerHTML = CATS.map(c =>
+  `<div class="cat-card" onclick="filterCat('${c.l}')"><span class="ci" style="background:${c.c}">${c.i}</span><span class="cn">${c.l}</span></div>`
+).join('');
+function filterCat(cat) { document.getElementById('q').value = cat; doSearch(cat); }
+
+/* ── PANEL ── */
+function openPanel(id) {
+  const t = TRAMITES.find(x => x.id === id); if (!t) return;
+  activeT = t;
+  document.getElementById('pt').textContent = t.name;
+  document.getElementById('pi').textContent = t.icon;
+  document.getElementById('pd').textContent = t.desc;
+  document.getElementById('pb').innerHTML = `
+    <div class="ps"><h3>Información general</h3>
+      <div class="p-chips">
+        <div class="p-chip"><div class="pc-lbl">Costo</div><div class="pc-val">${t.costo}</div></div>
+        <div class="p-chip"><div class="pc-lbl">Tiempo</div><div class="pc-val">${t.tiempo}</div></div>
+      </div></div>
+    <div class="ps"><h3>Requisitos</h3>${t.reqs.map(r => `<div class="req-item">✅ ${r}</div>`).join('')}</div>
+    <div class="ps"><h3>¿Dónde tramitarlo?</h3><div class="where-box">📍 ${t.donde}</div></div>`;
+  document.getElementById('cta').querySelector('.bl').textContent =
+    window._currentUser ? 'Iniciar trámite' : '🔐 Inicia sesión para tramitar';
+  document.getElementById('panel').classList.add('open');
+}
+function closePanel() { document.getElementById('panel').classList.remove('open'); activeT = null; }
+
+/* ── HELPERS ── */
+function emptyHtml(ico, txt) { return `<div class="empty-st"><div class="empty-ico">${ico}</div><p>${txt}</p></div>`; }
+function fmtDate(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}); }
+function setErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+function setLoad(btn, on) { btn.disabled=on; btn.querySelector('.bl').style.display=on?'none':''; btn.querySelector('.bs').style.display=on?'':'none'; }
+function toast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3200); }
+function toggleEye(id, btn) { const inp=document.getElementById(id); inp.type=inp.type==='password'?'text':'password'; btn.textContent=inp.type==='password'?'👁':'🙈'; }
+function updBar(inp) { document.getElementById('cbar').style.width=(inp.value.length/18*100)+'%'; document.getElementById('curp-hint').textContent=`${inp.value.length} / 18 caracteres`; }
+function fbMsg(code) {
+  return ({
+    'auth/email-already-in-use': 'Este correo ya está registrado.',
+    'auth/wrong-password':       'Contraseña incorrecta.',
+    'auth/invalid-credential':   'CURP o contraseña incorrectos.',
+    'auth/user-not-found':       'CURP no encontrada. ¿Tienes cuenta?',
+    'auth/weak-password':        'Contraseña muy débil (mín. 8 caracteres).',
+    'auth/invalid-email':        'Correo electrónico inválido.',
+    'auth/network-request-failed': 'Sin conexión. Verifica tu internet.',
+    'auth/too-many-requests':    'Demasiados intentos. Espera un momento.',
+  })[code] || 'Error inesperado. Intenta de nuevo.';
+}
+
+// PWA Service Worker
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>

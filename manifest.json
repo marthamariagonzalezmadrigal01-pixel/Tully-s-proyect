@@ -1,0 +1,15 @@
+{
+  "name": "BurocRapp Cuernavaca",
+  "short_name": "BurocRapp",
+  "description": "Trámites municipales de Cuernavaca",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#b5406e",
+  "theme_color": "#b5406e",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
